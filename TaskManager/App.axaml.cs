@@ -1,7 +1,9 @@
+using System;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -36,8 +38,8 @@ public partial class App : Application
         var services = collection.BuildServiceProvider();
         Ioc.Default.ConfigureServices(services);
         
-        InitDatabase();
-        ApplyMigrations();
+        if(InitDatabase())
+            ApplyMigrations();
         
         var vm = Ioc.Default.GetRequiredService<MainViewViewModel>();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -48,15 +50,22 @@ public partial class App : Application
             };
         }
 
+        Dispatcher.UIThread.UnhandledException += (s, e) =>
+        {
+            var appLog = Ioc.Default.GetRequiredService<ILogger<App>>();
+            appLog.LogCritical(e.Exception, "Необработанное исключение");
+            e.Handled = true;
+        };
+        
         base.OnFrameworkInitializationCompleted();
     }
 
-    private void InitDatabase()
+    private bool InitDatabase()
     {
         using var scope = Ioc.Default.CreateScope();
         
         var dbContext = scope.ServiceProvider.GetRequiredService<TaskContext>();
-        dbContext.Database.EnsureCreated();
+        return dbContext.Database.EnsureCreated();
     }
     
     private void ApplyMigrations()
