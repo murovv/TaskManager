@@ -1,0 +1,22 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:TaskManager.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:TaskManager.Views"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="TaskManager.Views.MainWindow"
+        x:DataType="vm:MainViewViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Трекер задач"
+        Padding="5"
+        MaxWidth="400">
+    <Interaction.Behaviors>
+	    <EventTriggerBehavior EventName="Closing">
+		    <InvokeCommandAction Command="{Binding AddEditTaskViewModel.Save}"/>	
+        </EventTriggerBehavior>	
+    </Interaction.Behaviors>
+        <views:MainView >
+                
+        </views:MainView>
+</Window>

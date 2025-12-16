@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="using:TaskManager.Views"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:models="using:TaskManager.Models"
+             xmlns:viewModels="clr-namespace:TaskManager.ViewModels"
+             xmlns:reactiveUi="clr-namespace:ReactiveUI;assembly=ReactiveUI"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="TaskManager.Views.AddEditTaskView"
+             x:DataType="viewModels:AddEditTaskViewModel"
+             >
+    
+    <Grid RowDefinitions="Auto, *">
+        <TextBox Watermark="Название задачи" Text="{Binding TaskTitle }" >
+            <TextBox.KeyBindings>
+                <!-- Binds the Enter key gesture to the SubmitCommand in the ViewModel -->
+                <KeyBinding Gesture="Enter" Command="{Binding CreateTask}" />
+            </TextBox.KeyBindings>
+        </TextBox>
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+		    <ListBox ItemsSource="{Binding TaskItems}">
+				<ListBox.ItemTemplate>
+				    <DataTemplate x:DataType="models:TaskItem">
+					        <Grid DockPanel.Dock="Left" ColumnDefinitions="Auto, *, Auto" >
+                                    <CheckBox  IsChecked="{Binding IsCompleted}"/>
+                                    <TextBlock Grid.Column="1" TextWrapping="Wrap" Margin="5,0,5,0" VerticalAlignment="Center" Text="{Binding Title}"/>
+                                    <Button Grid.Column="2" DockPanel.Dock="Right" Command="{Binding $parent[local:AddEditTaskView].((viewModels:AddEditTaskViewModel)DataContext).DeleteTask}" CommandParameter="{Binding .}">x</Button>
+                        
+                            </Grid>	
+                            
+                    </DataTemplate>	
+                </ListBox.ItemTemplate>
+            </ListBox>	
+        </ScrollViewer>
+    </Grid>
+</UserControl>
