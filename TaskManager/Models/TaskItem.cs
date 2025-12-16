@@ -11,7 +11,7 @@ public class TaskItem
     [StringLength(100, MinimumLength = 1)]
     public string Title { get; set; }      // обязательно, до 100 символов
     public bool IsCompleted { get; set; }
-    public DateTime CreatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
     public TaskItem(string title):this()
     {

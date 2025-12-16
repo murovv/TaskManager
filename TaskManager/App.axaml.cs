@@ -1,10 +1,14 @@
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using TaskManager.DI;
+using TaskManager.Services;
 using TaskManager.ViewModels;
 using TaskManager.Views;
 
@@ -29,10 +33,11 @@ public partial class App : Application
         var collection = new ServiceCollection();
         collection.AddDbServices(connectionString);
         collection.AddCommonServices();
-        // Creates a ServiceProvider containing services from the provided IServiceCollection
         var services = collection.BuildServiceProvider();
         Ioc.Default.ConfigureServices(services);
-        Services.Migrations.Migrations.ApplyTaskMigrations();
+        
+        InitDatabase();
+        ApplyMigrations();
         
         var vm = Ioc.Default.GetRequiredService<MainViewViewModel>();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -44,5 +49,32 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private void InitDatabase()
+    {
+        using var scope = Ioc.Default.CreateScope();
+        
+        var dbContext = scope.ServiceProvider.GetRequiredService<TaskContext>();
+        dbContext.Database.EnsureCreated();
+    }
+    
+    private void ApplyMigrations()
+    {
+        using var scope = Ioc.Default.CreateScope();
+        
+        var dbContext = scope.ServiceProvider.GetRequiredService<TaskContext>();
+        var log = scope.ServiceProvider.GetRequiredService<ILogger<TaskContext>>();
+        
+        var pendingMigrations = dbContext.Database.GetPendingMigrations();
+        if (pendingMigrations.Any())
+        {
+            log.LogInformation($"Применение миграций");
+            dbContext.Database.Migrate();
+        }
+        else
+        {
+            log.LogInformation("Схема бд актуальна.");
+        }
     }
 }

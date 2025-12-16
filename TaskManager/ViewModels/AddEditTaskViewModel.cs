@@ -71,7 +71,7 @@ public class AddEditTaskViewModel: ReactiveValidationObject
     private void ExecuteCreateTask()
     {
         _logger.LogInformation("Creating new task");
-        var newTask = _taskRepository.CreateTask("");
+        var newTask = _taskRepository.CreateTask(TaskTitle);
         _taskRepository.Save();
 
         TaskItems.Add(newTask);

@@ -20,8 +20,7 @@ public static class Bootstrapper
     {
         collection.AddDbContext<TaskContext>(options =>
         {
-            options.UseSqlite("Data Source=tasks.db");
-            //options.UseNpgsql(connectionString);
+            options.UseNpgsql(connectionString);
         });
     }
 }
