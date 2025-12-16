@@ -62,7 +62,7 @@ public class AddEditTaskViewModel: ReactiveValidationObject
             "Заголовок не может быть пустым");
         
         var notTooLongValidation = this.WhenAnyValue(x => x.TaskTitle, (x) => x.Length <= TaskItem.TITLE_MAX_LENGTH);
-        canExecuteCreateTask = canExecuteCreateTask.Merge(notTooLongValidation);
+        canExecuteCreateTask = canExecuteCreateTask.CombineLatest(notTooLongValidation, (a, b) => a && b);
         
         this.ValidationRule(
             vm => vm.TaskTitle, 
@@ -89,13 +89,12 @@ public class AddEditTaskViewModel: ReactiveValidationObject
     private void ExecuteDeleteTask(TaskItem taskItem)
     {
         taskItem.IsVisible = false;
-        //soft delete - не удаляем из бд
         TaskItems.Remove(taskItem);
     }
 
     private async Task ExecuteCreateTask()
     {
-        _logger.LogInformation("Creating new task");
+        _logger.LogInformation("Создание новой задачи");
         var newTask = await _taskRepository.CreateTask(TaskTitle);
         await _taskRepository.Save();
 

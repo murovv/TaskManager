@@ -38,6 +38,12 @@ public class TaskContext : DbContext
             .Properties<DateTimeOffset>()
             .HaveConversion<DateTimeOffsetConverter>();
     }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<TaskItem>().ToTable(x => x.HasCheckConstraint("CK_TaskItems_Title_MinLength", "LENGTH(\"Title\") >= 1"));
+    }
 }
 
 public class DateTimeOffsetConverter : ValueConverter<DateTimeOffset, DateTimeOffset>

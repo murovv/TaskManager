@@ -9,8 +9,7 @@ public class TaskItem
     
     public Guid Id { get; private set; }
     
-    [Required]
-    [StringLength(TITLE_MAX_LENGTH, MinimumLength = 1)]
+    [MinLength(1), MaxLength(TITLE_MAX_LENGTH)]
     public string Title { get; set; }
     public bool IsCompleted { get; set; }
 
