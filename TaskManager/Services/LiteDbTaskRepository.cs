@@ -17,21 +17,22 @@ public class LiteDbTaskRepository : ITaskRepository
         return _context.TaskItems.AsQueryable();
     }
 
-    public TaskItem CreateTask(string taskTitle)
+    public async Task<TaskItem> CreateTask(string taskTitle)
     {
         var item = new TaskItem(taskTitle);
-        _context.TaskItems.Add(item);
+        await _context.TaskItems.AddAsync(item);
         return item;
     }
 
-    public void DeleteTask(TaskItem task)
+    public Task DeleteTask(TaskItem task)
     {
         _context.TaskItems.Remove(task);
+        return Task.CompletedTask;
     }
 
-    public void Save()
+    public async Task Save()
     {
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
     
     private TaskContext _context;

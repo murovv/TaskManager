@@ -38,8 +38,8 @@ public partial class App : Application
         var services = collection.BuildServiceProvider();
         Ioc.Default.ConfigureServices(services);
         
-        if(InitDatabase())
-            ApplyMigrations();
+        /*if(InitDatabase())*/
+        ApplyMigrations();
         
         var vm = Ioc.Default.GetRequiredService<MainViewViewModel>();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -58,14 +58,6 @@ public partial class App : Application
         };
         
         base.OnFrameworkInitializationCompleted();
-    }
-
-    private bool InitDatabase()
-    {
-        using var scope = Ioc.Default.CreateScope();
-        
-        var dbContext = scope.ServiceProvider.GetRequiredService<TaskContext>();
-        return dbContext.Database.EnsureCreated();
     }
     
     private void ApplyMigrations()

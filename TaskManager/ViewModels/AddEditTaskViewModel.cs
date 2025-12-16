@@ -31,20 +31,44 @@ public class AddEditTaskViewModel: ReactiveValidationObject
     
     private string _taskTitle = string.Empty;
     
+    /// <summary>
+    /// Список задач
+    /// </summary>
     public ObservableCollection<TaskItem> TaskItems { get; }
+    
+    /// <summary>
+    /// Команда добавления задачи
+    /// </summary>
     public ICommand CreateTask { get; }
 
+    /// <summary>
+    /// Команда удаления задачи
+    /// </summary>
     public ICommand DeleteTask { get; }
 
+    /// <summary>
+    /// Команда сохранения внесенных изменений
+    /// </summary>
     public ICommand Save { get; }
     
     public AddEditTaskViewModel()
     {
         var canExecuteCreateTask = this.WhenAnyValue(x => x.TaskTitle, (x) => !string.IsNullOrEmpty(x));
         //для того чтобы не показывать ошибку если пользователь еще ничего не вводил
-        var validationRule = canExecuteCreateTask.Merge(_taskTitleNotEdited);
+        var notEmptyValidation = canExecuteCreateTask.Merge(_taskTitleNotEdited);
+        this.ValidationRule(
+            vm => vm.TaskTitle, 
+            notEmptyValidation,
+            "Заголовок не может быть пустым");
         
-        this.ValidationRule(vm => vm.TaskTitle, validationRule, "Заголовок не может быть пустым");
+        var notTooLongValidation = this.WhenAnyValue(x => x.TaskTitle, (x) => x.Length <= TaskItem.TITLE_MAX_LENGTH);
+        canExecuteCreateTask = canExecuteCreateTask.Merge(notTooLongValidation);
+        
+        this.ValidationRule(
+            vm => vm.TaskTitle, 
+            notTooLongValidation,
+            $"Длина заголовка не должна превышать 100 символов");
+        
         CreateTask = ReactiveCommand.Create(ExecuteCreateTask, canExecuteCreateTask);
         DeleteTask = ReactiveCommand.Create<TaskItem>(ExecuteDeleteTask);
         Save = ReactiveCommand.Create(ExecuteSave);
@@ -53,7 +77,7 @@ public class AddEditTaskViewModel: ReactiveValidationObject
         _taskRepository = Ioc.Default.GetRequiredService<ITaskRepository>();
         _taskTitleNotEdited.OnNext(true);
 
-        var tasks = _taskRepository.GetAll().ToList();
+        var tasks = _taskRepository.GetAll().Where(x=>x.IsVisible).ToList();
         TaskItems = new ObservableCollection<TaskItem>(tasks);
     }
 
@@ -64,15 +88,16 @@ public class AddEditTaskViewModel: ReactiveValidationObject
 
     private void ExecuteDeleteTask(TaskItem taskItem)
     {
+        taskItem.IsVisible = false;
         //soft delete - не удаляем из бд
         TaskItems.Remove(taskItem);
     }
 
-    private void ExecuteCreateTask()
+    private async Task ExecuteCreateTask()
     {
         _logger.LogInformation("Creating new task");
-        var newTask = _taskRepository.CreateTask(TaskTitle);
-        _taskRepository.Save();
+        var newTask = await _taskRepository.CreateTask(TaskTitle);
+        await _taskRepository.Save();
 
         TaskItems.Add(newTask);
         TaskTitle = string.Empty;
@@ -80,8 +105,6 @@ public class AddEditTaskViewModel: ReactiveValidationObject
     }
 
     private ITaskRepository _taskRepository;
-    
-    private IObservable<bool> _taskTitleIsEmpty;
     
     private Subject<bool> _taskTitleNotEdited = new();
     

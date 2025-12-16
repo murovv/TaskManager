@@ -9,9 +9,9 @@ public interface ITaskRepository : IDisposable
 {
     public IQueryable<TaskItem> GetAll();
     
-    public TaskItem CreateTask(string taskTitle);
+    public Task<TaskItem> CreateTask(string taskTitle);
     
-    public void DeleteTask(TaskItem task);
+    public Task DeleteTask(TaskItem task);
 
-    public void Save();
+    public Task Save();
 }
