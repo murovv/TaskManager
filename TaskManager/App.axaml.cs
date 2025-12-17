@@ -33,8 +33,9 @@ public partial class App : Application
         var connectionString = configuration.GetConnectionString("DefaultConnection");
         
         var collection = new ServiceCollection();
-        collection.AddDbServices(connectionString);
         collection.AddCommonServices();
+        collection.AddDbServices(connectionString);
+        
         var services = collection.BuildServiceProvider();
         Ioc.Default.ConfigureServices(services);
         

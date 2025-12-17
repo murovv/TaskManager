@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using TaskManager.Models;
 
 namespace TaskManager.Services;
@@ -22,6 +23,11 @@ public class LiteDbTaskRepository : ITaskRepository
         var item = new TaskItem(taskTitle);
         await _context.TaskItems.AddAsync(item);
         return item;
+    }
+
+    public void Update(TaskItem task)
+    {
+        _context.TaskItems.Update(task);
     }
 
     public Task DeleteTask(TaskItem task)

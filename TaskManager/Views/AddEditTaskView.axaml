@@ -23,7 +23,13 @@
 				<ListBox.ItemTemplate>
 				    <DataTemplate x:DataType="models:TaskItem">
 					        <Grid DockPanel.Dock="Left" ColumnDefinitions="Auto, *, Auto" >
-                                    <CheckBox  IsChecked="{Binding IsCompleted}"/>
+                                    <CheckBox  IsChecked="{Binding IsCompleted}">
+                                        <Interaction.Behaviors>
+                                            <EventTriggerBehavior EventName="IsCheckedChanged">
+                                                <InvokeCommandAction Command="{Binding $parent[local:AddEditTaskView].((viewModels:AddEditTaskViewModel)DataContext).ItemEdited}" CommandParameter="{Binding}"></InvokeCommandAction>
+                                            </EventTriggerBehavior>
+                                        </Interaction.Behaviors>
+                                    </CheckBox>
                                     <TextBlock Grid.Column="1" TextWrapping="Wrap" Margin="5,0,5,0" VerticalAlignment="Center" Text="{Binding Title}"/>
                                     <Button Grid.Column="2" DockPanel.Dock="Right" Command="{Binding $parent[local:AddEditTaskView].((viewModels:AddEditTaskViewModel)DataContext).DeleteTask}" CommandParameter="{Binding .}">x</Button>
                         

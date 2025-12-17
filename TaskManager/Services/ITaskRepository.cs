@@ -11,6 +11,8 @@ public interface ITaskRepository : IDisposable
     
     public Task<TaskItem> CreateTask(string taskTitle);
     
+    public void Update(TaskItem task);
+    
     public Task DeleteTask(TaskItem task);
 
     public Task Save();

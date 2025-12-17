@@ -7,6 +7,7 @@ using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
@@ -51,6 +52,8 @@ public class AddEditTaskViewModel: ReactiveValidationObject
     /// </summary>
     public ICommand Save { get; }
     
+    public ICommand ItemEdited { get; }
+    
     public AddEditTaskViewModel()
     {
         var canExecuteCreateTask = this.WhenAnyValue(x => x.TaskTitle, (x) => !string.IsNullOrEmpty(x));
@@ -69,41 +72,68 @@ public class AddEditTaskViewModel: ReactiveValidationObject
             notTooLongValidation,
             $"Длина заголовка не должна превышать 100 символов");
         
-        CreateTask = ReactiveCommand.Create(ExecuteCreateTask, canExecuteCreateTask);
-        DeleteTask = ReactiveCommand.Create<TaskItem>(ExecuteDeleteTask);
+        CreateTask = ReactiveCommand.CreateFromTask(ExecuteCreateTask, canExecuteCreateTask);
+        DeleteTask = ReactiveCommand.CreateFromTask<TaskItem>(ExecuteDeleteTask);
+        ItemEdited = ReactiveCommand.CreateFromTask<TaskItem>(ExecuteEdited);
         Save = ReactiveCommand.Create(ExecuteSave);
 
-        _logger = Ioc.Default.GetRequiredService<ILogger<TaskItem>>();
-        _taskRepository = Ioc.Default.GetRequiredService<ITaskRepository>();
         _taskTitleNotEdited.OnNext(true);
-
-        var tasks = _taskRepository.GetAll().Where(x=>x.IsVisible).ToList();
-        TaskItems = new ObservableCollection<TaskItem>(tasks);
+        _logger = Ioc.Default.GetRequiredService<ILogger<TaskItem>>();
+        using (var scope = Ioc.Default.CreateScope())
+        {
+            var taskRepository = scope.ServiceProvider.GetRequiredService<ITaskRepository>();
+            var tasks = taskRepository.GetAll().Where(x => x.IsVisible).AsNoTracking().ToList();
+            TaskItems = new ObservableCollection<TaskItem>(tasks);
+        }
     }
 
-    private void ExecuteSave()
+    private async Task ExecuteEdited(TaskItem obj)
     {
-        _taskRepository.Save();
+        using (var scope = Ioc.Default.CreateScope())
+        {
+            var taskRepository = scope.ServiceProvider.GetRequiredService<ITaskRepository>();
+            taskRepository.Update(obj);
+            await taskRepository.Save();
+        }
     }
 
-    private void ExecuteDeleteTask(TaskItem taskItem)
+    private async Task ExecuteSave()
     {
-        taskItem.IsVisible = false;
+        using (var scope = Ioc.Default.CreateScope())
+        {
+            var taskRepository = scope.ServiceProvider.GetRequiredService<ITaskRepository>();
+            await taskRepository.Save();
+        }
+    }
+
+    private async Task ExecuteDeleteTask(TaskItem taskItem)
+    {
+        using (var scope = Ioc.Default.CreateScope())
+        {
+            var taskRepository = scope.ServiceProvider.GetRequiredService<ITaskRepository>();
+            taskItem.IsVisible = false;
+            taskRepository.Update(taskItem);
+            await taskRepository.Save();
+        }
+        
         TaskItems.Remove(taskItem);
     }
 
     private async Task ExecuteCreateTask()
     {
-        _logger.LogInformation("Создание новой задачи");
-        var newTask = await _taskRepository.CreateTask(TaskTitle);
-        await _taskRepository.Save();
+        TaskItem newTask;
+        using (var scope = Ioc.Default.CreateScope())
+        {
+            var taskRepository = scope.ServiceProvider.GetRequiredService<ITaskRepository>();
+            _logger.LogInformation("Создание новой задачи");
+            newTask = await taskRepository.CreateTask(TaskTitle);
+            await taskRepository.Save();
+        }
 
         TaskItems.Add(newTask);
         TaskTitle = string.Empty;
         _taskTitleNotEdited.OnNext(true);
     }
-
-    private ITaskRepository _taskRepository;
     
     private Subject<bool> _taskTitleNotEdited = new();
     
